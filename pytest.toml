@@ -1,0 +1,18 @@
+[pytest]
+
+addopts = [
+    "-s"
+]
+
+pythonpath = [
+    "./scripts/",
+    "./tests/"
+]
+
+testpaths = [
+    "./scripts/"
+]
+
+python_files = [
+    "pytest_runner.py"
+]
