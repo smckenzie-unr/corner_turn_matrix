@@ -16,5 +16,5 @@ pytest:
   script:
     - python -m pytest --junitxml=pytest-report.xml
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
