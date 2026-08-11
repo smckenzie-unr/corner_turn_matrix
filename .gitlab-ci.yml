@@ -1,0 +1,20 @@
+stages:
+  - test
+
+variables:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+pytest:
+  image: python:3.11
+  stage: test
+  before_script:
+    - apt-get update
+    - apt-get install -y ghdl
+    - python -m pip install --upgrade pip
+    - python -m pip install pytest cocotb numpy
+    - if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+  script:
+    - python -m pytest --junitxml=pytest-report.xml
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
