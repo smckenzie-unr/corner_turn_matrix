@@ -7,20 +7,27 @@ from cocotb_tools.runner import get_runner
 os.environ["PATH"] = "/usr/bin:" + os.environ["PATH"]
 
 def test_input_column_counter() -> None:
-    toplevel_entity = "input_column_counter"
-    testbench = "input_column_counter_tb"
+    toplevel_entity = "input_address_counter"
+    testbench = "input_address_counter_tb"
 
     runner = get_runner("ghdl")
 
     runner.build(
         sources = [
-            "./sources/input_column_counter.vhd"
+            f"./sources/{toplevel_entity}.vhd",
+            "./includes/ctm_package.vhd"
         ],
         build_dir = "./build/",
         hdl_toplevel = toplevel_entity,
         build_args = [
             "--std=08"
         ],
+        parameters = {
+            "C_NUM_COLS"       : 2048,
+            "C_ADDRESS_WIDTH"  : 32,
+            "C_BASE_ADDRESS"   : 0,
+            "C_OFFSET_ADDRESS" : 4096
+        },
         timescale = ("1ns", "1ps"),
         hdl_library = "work",
         always = True
