@@ -8,16 +8,11 @@ from cocotb.clock import Clock
 from cocotb.triggers import Timer, RisingEdge
 from cocotb.handle import HierarchyObject, SimHandleBase
 
+from scripts.tb_utils import setup_clock
+
 logger = logging.getLogger("input_column_counter_tb")
 logger.setLevel(logging.DEBUG)
 logger.propagate = True
-
-async def setup_clock(signal : SimHandleBase, freq : float, df : float = 0.5) -> None:
-    T = int(1 / freq * 1e12)
-    T_high = int(np.ceil(T * df))
-    logger.debug(f"Period: {T}. Period High: {T_high}")
-    clk = Clock(signal, period = T, period_high = T_high, unit = "ps")
-    cocotb.start_soon(clk.start())
 
 @cocotb.test()
 async def constant_enable(DUT : HierarchyObject) -> None:
@@ -33,7 +28,7 @@ async def constant_enable(DUT : HierarchyObject) -> None:
     logger.info(f"offset Address: 0x{offset:08X}")
 
     logger.info("Starting clock at 325 MHz")
-    await setup_clock(DUT.CLK, 325e6)
+    await setup_clock(DUT.CLK, 200e6)
     await Timer(1, unit = "us")
 
     logger.info("Deasserting reset")
