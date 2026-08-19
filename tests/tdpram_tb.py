@@ -18,10 +18,11 @@ logger.propagate = True
 
 @cocotb.test()
 async def tdpram_simulation(DUT : HierarchyObject) -> None:
-    await setup_clock(DUT.CLK, 200e6)
+    await setup_clock(DUT.CLK_A, 200e6)
     await Timer(1, unit = "us")
 
     logger.info("Deasserting reset")
+    DUT.ADDRESS_A.value = 15
     
     await Timer(5, unit = "us")
     logger.info("Finished sim")

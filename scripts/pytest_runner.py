@@ -6,7 +6,7 @@ import sys
 import pytest
 import subprocess
 from pathlib import Path
-from cocotb_tools.runner import get_runner
+from cocotb_tools.runner import get_runner, VHDL, Verilog
 
 # Add the mcode GHDL path
 os.environ["PATH"] = "/usr/bin:" + os.environ["PATH"]
@@ -63,72 +63,33 @@ def test_input_column_counter() -> None:
         waves = True
     )
 
-# @pytest.mark.input_column_counter
-# def test_input_column_counter() -> None:
-#     toplevel_entity = "input_address_counter"
-#     testbench = "input_address_counter_tb"
-    
-
-#     #runner = get_runner("ghdl")
-#     runner = get_runner("questa")
-
-#     runner.build(
-#         sources = [
-#             "./includes/ctm_package.vhd",
-#             f"./sources/{toplevel_entity}.vhd"
-#         ],
-#         build_dir = "./build/",
-#         hdl_toplevel = toplevel_entity,
-#         build_args = [
-#             # "--std=08"
-#             "-2008"
-#         ],
-#         parameters = {
-#             "C_NUM_COLS"       : 2048,
-#             "C_ADDRESS_WIDTH"  : 32,
-#             "C_BASE_ADDRESS"   : 0,
-#             "C_OFFSET_ADDRESS" : 4096
-#         },
-#         timescale = ("1ns", "1ps"),
-#         hdl_library = "work",
-#         always = True
-#     )
-
-#     runner.test(
-#         hdl_toplevel = toplevel_entity,
-#         test_module = testbench,
-#         hdl_toplevel_library = "work",
-#         hdl_toplevel_lang = "vhdl",
-#         # test_args = [
-#         #     # "--std=08",
-#         #     # "--time-resolution=ps",
-#         #     # "-2008"
-#         # ],
-#         plusargs = [
-#             "-t",
-#             "ps"
-#             # "--stop-time=100us",
-#             # "--ieee-asserts=disable-at-0"
-#             # "-timescale"
-#             # "+stop+100us"
-#         ],
-#         timescale = ("1ns", "1ps"),
-#         verbose = True,
-#         waves = True
-#     )
-
 @pytest.mark.xilinx_tdpram_wrapper
-def test_input_column_counter() -> None:
+def test_tdpram() -> None:
     toplevel_entity = "xilinx_tdpram_wrapper"
     testbench = "tdpram_tb"
-    os.makedirs("./build/work", exist_ok=True)
-    # subprocess.run(["vmap", "xpm", "./questa_libs/xpm"])
-    subprocess.run(
-        ["vmap", "xpm", os.path.abspath("./questa_libs/xpm")],
-        cwd="./build/work"
-    )
     
     runner = get_runner("questa")
+
+    runner.build(
+        sources = [
+            Verilog("/tools/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv")
+        ],
+        build_args = ["-quiet"],
+        build_dir = "./build/",
+        timescale = ("1ns", "1ps"),
+        hdl_library = "work",
+        always = True
+    )
+
+    runner.build(
+        sources = [
+            VHDL("/tools/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_VCOMP.vhd")
+        ],
+        build_dir = "./build/",
+        timescale = ("1ns", "1ps"),
+        hdl_library = "xpm",
+        always = True
+    )
 
     runner.build(
         sources = [
@@ -138,8 +99,17 @@ def test_input_column_counter() -> None:
         build_dir = "./build/",
         hdl_toplevel = toplevel_entity,
         build_args = [
-            "-2008",
+            VHDL("-2008"),
+            Verilog("-L"),
+            Verilog("xpm"),
+            "-quiet"
         ],
+        parameters = {
+            "C_NUM_COLS"       : 2048,
+            "C_ADDRESS_WIDTH"  : 32,
+            "C_BASE_ADDRESS"   : 0,
+            "C_OFFSET_ADDRESS" : 4096
+        },
         timescale = ("1ns", "1ps"),
         hdl_library = "work",
         always = True
@@ -154,7 +124,8 @@ def test_input_column_counter() -> None:
             "-L", 
             "xpm",
             "-t",
-            "ps"
+            "ps",
+            "-quiet"
         ],
         timescale = ("1ns", "1ps"),
         verbose = True,

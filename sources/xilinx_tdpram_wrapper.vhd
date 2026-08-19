@@ -10,8 +10,8 @@ entity xilinx_tdpram_wrapper is
     generic (
         C_DATA_WIDTH       : integer range 8 to 64 := 16;
         C_MEMORY_DEPTH     : integer range 2 to 32768 := 2048;
-        C_READ_A_LATENCY   : integer range 0 to 100 := 0;
-        C_READ_B_LATENCY   : integer range 0 to 100 := 0;
+        C_READ_A_LATENCY   : integer range 0 to 100 := 1;
+        C_READ_B_LATENCY   : integer range 0 to 100 := 1;
         C_MEMORY_PRIMITIVE : string := "block";
         C_WRITE_MODE_A     : string := "no_change";
         C_WRITE_MODE_B     : string := "no_change";
@@ -104,8 +104,8 @@ begin
             injectsbiterrb => '0',
             injectdbiterrb => '0',
             doutb          => DATA_OUT_B, 
-            sbiterrb       => sbiterrb, 
-            dbiterrb       => dbiterrb 
+            sbiterrb       => open, 
+            dbiterrb       => open 
         );
 
 end architecture synthesizable;
