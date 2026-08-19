@@ -104,12 +104,6 @@ def test_tdpram() -> None:
             Verilog("xpm"),
             "-quiet"
         ],
-        parameters = {
-            "C_NUM_COLS"       : 2048,
-            "C_ADDRESS_WIDTH"  : 32,
-            "C_BASE_ADDRESS"   : 0,
-            "C_OFFSET_ADDRESS" : 4096
-        },
         timescale = ("1ns", "1ps"),
         hdl_library = "work",
         always = True
