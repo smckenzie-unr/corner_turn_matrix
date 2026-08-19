@@ -5,6 +5,7 @@ addopts = [
 ]
 
 pythonpath = [
+    ".",
     "./scripts/",
     "./tests/"
 ]
@@ -15,4 +16,9 @@ testpaths = [
 
 python_files = [
     "pytest_runner.py"
+]
+
+markers = [
+    "input_column_counter: Counts the input address counter",
+    "xilinx_tdpram_wrapper: Simulated the xpm wrapper"
 ]
