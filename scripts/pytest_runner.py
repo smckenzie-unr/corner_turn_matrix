@@ -26,8 +26,8 @@ def test_input_column_counter() -> None:
 
     runner.build(
         sources = [
-            "./includes/ctm_package.vhd",
-            f"./sources/{toplevel_entity}.vhd"
+            VHDL("./includes/ctm_package.vhd"),
+            VHDL(f"./sources/{toplevel_entity}.vhd")
         ],
         build_dir = "./build/",
         hdl_toplevel = toplevel_entity,
@@ -93,8 +93,8 @@ def test_tdpram() -> None:
 
     runner.build(
         sources = [
-            "./includes/ctm_package.vhd",
-            f"./sources/{toplevel_entity}.vhd"
+            VHDL("./includes/ctm_package.vhd"),
+            VHDL(f"./sources/{toplevel_entity}.vhd")
         ],
         build_dir = "./build/",
         hdl_toplevel = toplevel_entity,
@@ -125,38 +125,3 @@ def test_tdpram() -> None:
         verbose = True,
         waves = True
     )
-
-
-
-
-# runner.build(
-#     sources=[
-#         "./includes/ctm_package.vhd",
-#         f"./sources/{toplevel_entity}.vhd",
-
-#         # XPM simulation models
-#         "/opt/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_VCOMP.vhd",
-#         "/opt/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv",
-#         "/opt/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv",
-#         "/opt/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv",
-#     ],
-#     hdl_library="work",
-#     build_dir="./build/",
-#     build_args=[
-#         "-2008",
-#         "-L", "xpm"     # <-- IMPORTANT: tell Questa to link the XPM library
-#     ],
-#     always=True
-# )
-# runner.test(
-#     hdl_toplevel=toplevel_entity,
-#     test_module=testbench,
-#     hdl_toplevel_library="work",
-#     hdl_toplevel_lang="vhdl",
-#     plusargs=[
-#         "-L", "xpm",   # <-- REQUIRED for elaboration
-#         "-t", "ps"
-#     ],
-#     waves=True,
-#     verbose=True
-# )
