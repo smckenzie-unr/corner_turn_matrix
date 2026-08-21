@@ -7,6 +7,7 @@ import pytest
 import subprocess
 from pathlib import Path
 from cocotb_tools.runner import get_runner, VHDL, Verilog
+from pytest import FixtureRequest
 
 # Add the mcode GHDL path
 os.environ["PATH"] = "/usr/bin:" + os.environ["PATH"]
@@ -64,9 +65,39 @@ def test_input_column_counter() -> None:
     )
 
 @pytest.mark.xilinx_tdpram_wrapper
-def test_tdpram() -> None:
+def test_tdpram(request : FixtureRequest) -> None:
     toplevel_entity = "xilinx_tdpram_wrapper"
     testbench = "tdpram_tb"
+    primitive = "block"
+
+    match (primitive):
+        case "block":
+            testcase = "tdpram_bram_simulation"
+            parameters = {
+                "C_READ_A_LATENCY" : 1,
+                "C_READ_B_LATENCY" : 1,
+                "C_MEMORY_PRIMITIVE" : "block",
+                "C_WRITE_MODE_A" : "no_change",
+                "C_WRITE_MODE_B" : "no_change",
+            }
+        case "distribuited":
+            testcase = "tdpram_distributed_simulation",
+            parameters = {
+                "C_READ_A_LATENCY" : 0,
+                "C_READ_B_LATENCY" : 0,
+                "C_MEMORY_PRIMITIVE" : "distributed",
+                "C_WRITE_MODE_A" : "read_first",
+                "C_WRITE_MODE_B" : "read_first",
+            },
+        case _:
+            testcase = "tdpram_bram_simulation"
+            parameters = {
+                "C_READ_A_LATENCY" : 1,
+                "C_READ_B_LATENCY" : 1,
+                "C_MEMORY_PRIMITIVE" : "block",
+                "C_WRITE_MODE_A" : "no_change",
+                "C_WRITE_MODE_B" : "no_change",
+            }
     
     runner = get_runner("questa")
 
@@ -104,6 +135,7 @@ def test_tdpram() -> None:
             Verilog("xpm"),
             "-quiet"
         ],
+
         timescale = ("1ns", "1ps"),
         hdl_library = "work",
         always = True
@@ -121,7 +153,9 @@ def test_tdpram() -> None:
             "ps",
             "-quiet"
         ],
+        testcase = testcase,
+        parameters = parameters,
         timescale = ("1ns", "1ps"),
-        verbose = True,
+        verbose = False,
         waves = True
     )
