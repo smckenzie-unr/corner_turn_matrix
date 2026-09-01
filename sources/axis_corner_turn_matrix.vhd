@@ -28,6 +28,8 @@ architecture synthesizable of axis_corner_turn_matrix is
     constant C_TOTAL_MEM_SIZE : integer := C_BUFFER_SIZE + 2 * C_NUMBER_COLS * C_NUMBER_ROWS;
     constant C_ADDRESS_SIZE   : integer := clog2(C_TOTAL_MEM_SIZE);
 
+    type state_machine_t is (IDLE, BUFF_ONE, BUFF_TWO, RESET);
+
     signal tdpram_reset       : std_logic;
     signal tdpram_input_en    : std_logic_vector(C_DATA_WIDTH / 8 - 1 downto 0);
     signal input_count_en     : std_logic;
@@ -35,6 +37,14 @@ architecture synthesizable of axis_corner_turn_matrix is
 
     signal tdpram_output_en   : std_logic;
     signal tdpram_output_addr : std_logic_vector(C_ADDRESS_SIZE - 1 downto 0);
+
+    signal master_tready      : std_logic;
+
+    signal curr_out_state     : state_machine_t;
+    signal next_out_state     : state_machine_t;
+
+    signal curr_in_state      : state_machine_t;
+    signal next_in_state      : state_machine_t;
 begin
 
     tdpram_reset <= not AXIS_ARSTN;
@@ -86,5 +96,23 @@ begin
             ENABLE  => tdpram_output_en,
             ADDRESS => tdpram_input_addr
         );
+
+    curr_state_proc : process(AXIS_ACLK) is
+    begin
+        if (rising_edge(AXIS_ACLK)) then
+            if (AXIS_ARSTN = '0') then
+                curr_out_state <= RESET;
+                curr_in_state <= RESET;
+            else
+                curr_out_state <= next_out_state;
+                curr_in_state <= next_in_state;
+            end if;
+        end if;
+    end process curr_state_proc;
+
+    output_comb_proc : process(all) is
+    begin
+        
+    end process output_comb_proc;
 
 end architecture synthesizable;
