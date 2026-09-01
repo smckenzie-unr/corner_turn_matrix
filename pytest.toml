@@ -20,5 +20,6 @@ python_files = [
 
 markers = [
     "input_column_counter: Counts the input address counter",
+    "output_column_counter: Counts the output address counter",
     "xilinx_tdpram_wrapper: Simulated the xpm wrapper"
 ]
