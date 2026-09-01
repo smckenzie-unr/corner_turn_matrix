@@ -35,10 +35,11 @@ entity input_address_counter is
         C_OFFSET_ADDRESS : integer
     );
     port (
-        CLK     : in  std_ulogic;
-        RST     : in  std_ulogic;
-        ENABLE  : in  std_ulogic;
-        ADDRESS : out unsigned(C_ADDRESS_WIDTH - 1 downto 0)
+        CLK       : in  std_logic;
+        RST       : in  std_logic;
+        ENABLE    : in  std_logic;
+        ADDR_CHNG : out std_logic;
+        ADDRESS   : out unsigned(C_ADDRESS_WIDTH - 1 downto 0)
     );
 end entity input_address_counter;
 
@@ -56,11 +57,12 @@ architecture synthesizable of input_address_counter is
                                                 C_ADDRESS_WIDTH
                                             );
 
-    signal counter       : unsigned(C_ADDRESS_WIDTH - 1 downto 0);
-    signal counter_strb  : std_ulogic;
-    signal load_count    : unsigned(C_ADDRESS_WIDTH - 1 downto 0);
+    signal counter        : unsigned(C_ADDRESS_WIDTH - 1 downto 0);
+    signal counter_strb   : std_logic;
+    signal load_count     : unsigned(C_ADDRESS_WIDTH - 1 downto 0);
 begin
     ADDRESS <= counter;
+    ADDR_CHNG <= counter_strb;
 
     counter_proc : process (CLK) is
     begin
