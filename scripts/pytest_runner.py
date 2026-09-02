@@ -86,7 +86,8 @@ def test_output_column_counter() -> None:
             "C_NUM_COLS"       : 128,
             "C_ADDRESS_WIDTH"  : 32,
             "C_BASE_ADDRESS"   : 0,
-            "C_OFFSET_ADDRESS" : 4096
+            "C_OFFSET_ADDRESS" : 8192,
+            "C_REGISTER_ADDR"  : "true"
         },
         timescale = ("1ns", "1fs"),
         hdl_library = "work",
