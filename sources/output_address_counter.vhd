@@ -30,7 +30,8 @@ entity output_address_counter is
         C_NUM_COLS       : integer;
         C_ADDRESS_WIDTH  : integer;
         C_BASE_ADDRESS   : integer;
-        C_OFFSET_ADDRESS : integer
+        C_OFFSET_ADDRESS : integer;
+        C_REGISTER_ADDR  : boolean := true
     );
     port (
         CLK       : in  std_logic;
@@ -69,9 +70,14 @@ architecture synthesizable of output_address_counter is
     signal col_strobe    : std_logic;
 begin
 
-    ADDRESS <= std_logic_vector(current_count);
+    addr_output_reg_gen : if (C_REGISTER_ADDR) generate
+        ADDRESS <= std_logic_vector(current_count);
+    else generate
+        ADDRESS <= std_logic_vector(next_count);
+    end generate addr_output_reg_gen;
+
     ADDR_CHNG <= '1' when (col_strobe = '1' and col_idx = C_COLS - 1) else '0';
-        
+
     comb_proc : process (all) is
     begin
         reset_row <= '1' when (RST = '1' or row_idx >= C_ROWS - 1) else '0';
@@ -123,31 +129,50 @@ begin
         end if;
     end process next_addr_count_proc;
 
-    curr_addr_count_proc : process (CLK) is 
-    begin
-        if (rising_edge(CLK)) then
-            if (RST = '1') then
-                current_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
-            else
-                if (ENABLE = '1') then
-                    current_count <= next_count;
+    output_register_gen : if (C_REGISTER_ADDR) generate
+        curr_addr_count_proc : process (CLK) is 
+        begin
+            if (rising_edge(CLK)) then
+                if (RST = '1') then
+                    current_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
+                else
+                    if (ENABLE = '1') then
+                        current_count <= next_count;
+                    end if;
                 end if;
             end if;
-        end if;
-    end process curr_addr_count_proc;
+        end process curr_addr_count_proc;
 
-    load_address_proc : process (CLK) is
-    begin
-        if (rising_edge(CLK)) then
-            if (RST = '1') then
-                load_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
-            else
-                if (current_count = C_MAX_BASE_ADDR - 1) then
-                    load_count <= to_unsigned(C_OFFSET_ADDRESS, C_ADDRESS_WIDTH);
-                elsif (current_count = C_MAX_OFFS_ADDR - 1) then
+        load_address_proc : process (CLK) is
+        begin
+            if (rising_edge(CLK)) then
+                if (RST = '1') then
                     load_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
+                else
+                    if (current_count = C_MAX_BASE_ADDR - 1) then
+                        load_count <= to_unsigned(C_OFFSET_ADDRESS, C_ADDRESS_WIDTH);
+                    elsif (current_count = C_MAX_OFFS_ADDR - 1) then
+                        load_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
+                    end if;
                 end if;
             end if;
-        end if;
-    end process load_address_proc;
+        end process load_address_proc;
+    else generate
+        load_address_proc : process (CLK) is
+        begin
+            if (rising_edge(CLK)) then
+                if (RST = '1') then
+                    load_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
+                else
+                    if (next_count = C_MAX_BASE_ADDR - 1) then
+                        load_count <= to_unsigned(C_OFFSET_ADDRESS, C_ADDRESS_WIDTH);
+                    elsif (next_count = C_MAX_OFFS_ADDR - 1) then
+                        load_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
+                    end if;
+                end if;
+            end if;
+        end process load_address_proc;
+    end generate output_register_gen;
+
+
 end architecture synthesizable;
