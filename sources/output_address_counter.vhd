@@ -67,18 +67,16 @@ architecture synthesizable of output_address_counter is
     signal col_idx       : unsigned(C_ADDRESS_WIDTH - 1 downto 0);
     signal reset_col     : std_logic;
     signal col_strobe    : std_logic;
-
-    signal address_flip  : std_logic;
 begin
 
     ADDRESS <= std_logic_vector(current_count);
-    ADDR_CHNG <= address_flip;
-
+    ADDR_CHNG <= '1' when (col_strobe = '1' and col_idx = C_COLS - 1) else '0';
+        
     comb_proc : process (all) is
     begin
         reset_row <= '1' when (RST = '1' or row_idx >= C_ROWS - 1) else '0';
-        reset_col <= '1' when (RST = '1' or (col_idx >= C_COLS - 1 and reset_row = '1')) else '0';
-        col_strobe <= '1' when (row_idx = C_ROWS - 1) else '0';
+        reset_col <= '1' when (RST = '1' or (col_idx >= C_COLS and reset_row = '1')) else '0';
+        col_strobe <= '1' when (row_idx = C_ROWS - 2) else '0';
     end process comb_proc;
 
     row_count_proc : process (CLK) is
@@ -116,7 +114,7 @@ begin
                 if (ENABLE = '1') then
                     next_count <= next_count + C_COLS;
                     if (reset_row = '1' and reset_col = '0') then
-                        next_count <= load_count + col_idx;-- + to_unsigned(1, C_ADDRESS_WIDTH);
+                        next_count <= load_count + col_idx;
                     elsif (reset_row = '1' and reset_col = '1') then
                         next_count <= load_count;
                     end if;
@@ -143,14 +141,10 @@ begin
         if (rising_edge(CLK)) then
             if (RST = '1') then
                 load_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
-                address_flip <= '0';
             else
-                address_flip <= '0';
                 if (current_count = C_MAX_BASE_ADDR - 1) then
-                    address_flip <= '1';
                     load_count <= to_unsigned(C_OFFSET_ADDRESS, C_ADDRESS_WIDTH);
                 elsif (current_count = C_MAX_OFFS_ADDR - 1) then
-                    address_flip <= '1';
                     load_count <= to_unsigned(C_BASE_ADDRESS, C_ADDRESS_WIDTH);
                 end if;
             end if;
