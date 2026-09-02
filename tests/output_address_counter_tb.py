@@ -22,9 +22,11 @@ async def constant_enable(DUT : HierarchyObject) -> None:
     DUT.ENABLE.value = 0
 
     num_cols = int(DUT.C_NUM_COLS.value)
+    num_rows = int(DUT.C_NUM_ROWS.value)
     base = int(DUT.C_BASE_ADDRESS.value)
     offset = int(DUT.C_OFFSET_ADDRESS.value)
     logger.info(f"Testing Number of columns: {num_cols}")
+    logger.info(f"Testing Number of rows: {num_rows}")
     logger.info(f"Base Address: 0x{base:08X}")
     logger.info(f"offset Address: 0x{offset:08X}")
 
@@ -32,22 +34,30 @@ async def constant_enable(DUT : HierarchyObject) -> None:
     await setup_clock(DUT.CLK, 320e6)
     await Timer(1, unit = "us")
 
+    base_addresses = [int(DUT.C_BASE_ADDRESS.value), int(DUT.C_OFFSET_ADDRESS.value)]
+    count_check = 0
+    pass_count = 0
+
     logger.info("Deasserting reset")
     DUT.RST.value = 0
     await Timer(1, unit = "us")
 
     await RisingEdge(DUT.CLK)
     DUT.ENABLE.value = 1
+    if (DUT.C_REGISTER_ADDR.value):
+        await RisingEdge(DUT.CLK)
+    for addr in base_addresses:
+        for c in range(0, num_cols, 1):
+            for r in range(0, num_rows, 1):
+                count_check = r * num_cols + c + addr
+                await RisingEdge(DUT.CLK)
+                logger.debug(f"{count_check} : {int(DUT.ADDRESS.value)}")
+                if (int(DUT.ADDRESS.value) == count_check):
+                    pass_count += 1
 
-    # for addr in [base, offset]:
-    #     logger.info(f"Testing address: 0x{addr:08X}")
-    #     for count in range(addr, addr + num_cols, 1):
-    #         await RisingEdge(DUT.CLK)
-    #         check = int(DUT.ADDRESS.value)
-    #         assert count == check, f"Fail current DUT address value {check}. Expected value {count}"
-    #     logger.info("Test Passed.")
+    assert (pass_count == 2 * num_cols * num_rows), \
+        "FAILURE. PASS COUNT WAS NOT EQUAL TO 2 * NUM_COLS * NUM_ROWS"
 
-    await Timer(25, unit = "us")
     await RisingEdge(DUT.CLK)
     DUT.ENABLE.value = 0
     
