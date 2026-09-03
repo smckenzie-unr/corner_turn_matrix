@@ -58,7 +58,7 @@ architecture synthesizable of output_address_counter is
                                                                             C_ADDRESS_WIDTH
                                                                         );
 
-    signal current_count : unsigned(C_ADDRESS_WIDTH - 1 downto 0);
+    signal current_count : unsigned(C_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
     signal next_count    : unsigned(C_ADDRESS_WIDTH - 1 downto 0);
     signal load_count    : unsigned(C_ADDRESS_WIDTH - 1 downto 0);
 
@@ -173,6 +173,5 @@ begin
             end if;
         end process load_address_proc;
     end generate output_register_gen;
-
 
 end architecture synthesizable;
