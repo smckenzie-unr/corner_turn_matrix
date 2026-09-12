@@ -16,11 +16,6 @@ entity address_logic is
 end entity address_logic;
 
 architecture synthesizable of address_logic is
-    type operational_state is (FILL0_DRAIN1, FILL1_DRAIN0, RESET);
-
-    signal curr_state : operational_state;
-    signal next_state : operational_state;
-
     signal input_chng_detect : std_logic;
     signal output_chng_detect : std_logic;
 
@@ -29,17 +24,6 @@ begin
 
     OUTPUT_ENABLE <= DATA_READY and not output_chng_detect;
     INPUT_ENABLE <= DATA_VALID and not input_chng_detect;
-
-    state_process : process(CLK) is
-    begin
-        if (rising_edge(CLK)) then
-            if (RST = '1') then
-                curr_state <= RESET;
-            else
-                curr_state <= next_state;
-            end if;
-        end if;
-    end process state_process;
 
     in_flip_latch : process(CLK) is
     begin
@@ -65,27 +49,9 @@ begin
 
     state_combination : process(all) is
     begin
-        next_state <= curr_state;
         state_change <= '0';
-        case curr_state is
-            when RESET =>
-                next_state <= FILL0_DRAIN1;
-            when FILL0_DRAIN1 =>
-                if (input_chng_detect = '1' and output_chng_detect = '1') then
-                    next_state <= FILL1_DRAIN0;
-                    state_change <= '1';
-                else
-                    next_state <= FILL0_DRAIN1;
-                end if;
-            when FILL1_DRAIN0 =>
-                if (input_chng_detect = '1' and output_chng_detect = '1') then
-                    next_state <= FILL0_DRAIN1;
-                    state_change <= '1';
-                else
-                    next_state <= FILL1_DRAIN0;
-                end if;
-            when others =>
-                null;
-        end case;
+        if (input_chng_detect = '1' and output_chng_detect = '1') then
+            state_change <= '1';
+        end if;
     end process state_combination;
 end architecture synthesizable;
