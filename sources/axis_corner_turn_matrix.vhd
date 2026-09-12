@@ -28,7 +28,7 @@ architecture synthesizable of axis_corner_turn_matrix is
     constant C_TOTAL_MEM_SIZE : integer := C_BUFFER_SIZE + 2 * C_NUMBER_COLS * C_NUMBER_ROWS;
     constant C_ADDRESS_SIZE   : integer := clog2(C_TOTAL_MEM_SIZE);
 
-    type state_machine_t is (IDLE, BUFF_ONE, BUFF_TWO, RESET);
+    type state_machine_t is (BUFF_ONE, BUFF_TWO, RESET);
 
     signal tdpram_reset       : std_logic;
     signal tdpram_input_en    : std_logic_vector(C_DATA_WIDTH / 8 - 1 downto 0);
@@ -38,6 +38,9 @@ architecture synthesizable of axis_corner_turn_matrix is
     signal tdpram_output_en   : std_logic;
     signal tdpram_output_addr : std_logic_vector(C_ADDRESS_SIZE - 1 downto 0);
 
+    signal input_flip         : std_logic;
+    signal output_flip        : std_logic;
+
     signal master_tready      : std_logic;
 
     signal curr_out_state     : state_machine_t;
@@ -45,6 +48,8 @@ architecture synthesizable of axis_corner_turn_matrix is
 
     signal curr_in_state      : state_machine_t;
     signal next_in_state      : state_machine_t;
+
+    signal axis_tvalid        : std_logic;
 begin
 
     tdpram_reset <= not AXIS_ARSTN;
@@ -76,10 +81,11 @@ begin
             C_OFFSET_ADDRESS => C_TOTAL_MEM_SIZE / 2
         )
         port map (
-            CLK     => AXIS_ACLK,
-            RST     => tdpram_reset,
-            ENABLE  => input_count_en,
-            ADDRESS => unsigned(tdpram_input_addr)
+            CLK       => AXIS_ACLK,
+            RST       => tdpram_reset,
+            ENABLE    => input_count_en,
+            ADDR_CHNG => input_flip,
+            ADDRESS   => unsigned(tdpram_input_addr)
         );
 
     OUTPUT_CTRL : entity work.output_address_counter
@@ -91,10 +97,11 @@ begin
             C_OFFSET_ADDRESS => C_TOTAL_MEM_SIZE / 2
         )
         port map (
-            CLK     => AXIS_ACLK,
-            RST     => tdpram_reset,
-            ENABLE  => tdpram_output_en,
-            ADDRESS => tdpram_input_addr
+            CLK       => AXIS_ACLK,
+            RST       => tdpram_reset,
+            ENABLE    => tdpram_output_en,
+            ADDR_CHNG => output_flip,
+            ADDRESS   => tdpram_input_addr
         );
 
     curr_state_proc : process(AXIS_ACLK) is
@@ -112,7 +119,17 @@ begin
 
     output_comb_proc : process(all) is
     begin
-        
+        next_out_state <= curr_out_state;
+        case curr_out_state is
+            when BUFF_ONE =>
+            when BUFF_TWO =>
+                if(curr_in_state = BUFF_ONE) then
+                    axis_tvalid <= '1';
+                end if;
+            when RESET =>
+                next_out_state <= BUFF_TWO;
+            when others =>
+        end case;
     end process output_comb_proc;
 
 end architecture synthesizable;
