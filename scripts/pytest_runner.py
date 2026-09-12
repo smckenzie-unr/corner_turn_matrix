@@ -112,6 +112,46 @@ def test_output_column_counter() -> None:
         waves = True
     )
 
+@pytest.mark.address_logic
+def test_address_logic() -> None:
+    toplevel_entity = "address_logic"
+    testbench = "address_logic_tb"
+
+    runner = get_runner("ghdl")
+
+    runner.build(
+        sources = [
+            VHDL("./includes/ctm_package.vhd"),
+            VHDL(f"./sources/{toplevel_entity}.vhd")
+        ],
+        build_dir = "./build/",
+        hdl_toplevel = toplevel_entity,
+        build_args = [
+            "--std=08"
+        ],
+        timescale = ("1ns", "1fs"),
+        hdl_library = "work",
+        always = True
+    )
+
+    runner.test(
+        hdl_toplevel = toplevel_entity,
+        test_module = testbench,
+        hdl_toplevel_library = "work",
+        hdl_toplevel_lang = "vhdl",
+        test_args = [
+            "--std=08",
+            "--time-resolution=fs",
+        ],
+        plusargs = [
+            "--stop-time=100us",
+            "--ieee-asserts=disable-at-0"
+        ],
+        timescale = ("1ns", "1fs"),
+        verbose = True,
+        waves = True
+    )
+
 @pytest.mark.xilinx_tdpram_wrapper
 def test_tdpram(request : FixtureRequest) -> None:
     toplevel_entity = "xilinx_tdpram_wrapper"
