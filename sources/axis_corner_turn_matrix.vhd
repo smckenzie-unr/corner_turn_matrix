@@ -33,7 +33,7 @@ architecture synthesizable of axis_corner_turn_matrix is
     signal tdpram_reset       : std_logic;
     signal tdpram_input_en    : std_logic_vector(C_DATA_WIDTH / 8 - 1 downto 0);
     signal input_count_en     : std_logic;
-    signal tdpram_input_addr  : std_logic_vector(C_ADDRESS_SIZE - 1 downto 0);
+    signal tdpram_input_addr  : unsigned(C_ADDRESS_SIZE - 1 downto 0);
 
     signal tdpram_output_en   : std_logic;
     signal tdpram_output_addr : std_logic_vector(C_ADDRESS_SIZE - 1 downto 0);
@@ -41,16 +41,12 @@ architecture synthesizable of axis_corner_turn_matrix is
     signal input_flip         : std_logic;
     signal output_flip        : std_logic;
 
-    signal master_tready      : std_logic;
-
-    signal curr_out_state     : state_machine_t;
-    signal next_out_state     : state_machine_t;
-
-    signal curr_in_state      : state_machine_t;
-    signal next_in_state      : state_machine_t;
-
-    signal axis_tvalid        : std_logic;
+    signal axis_tready        : std_logic := '0';
+    signal axis_tvalid        : std_logic := '0';
 begin
+
+    S_AXIS_TREADY <= axis_tready;
+    M_AXIS_TVALID <= axis_tvalid;
 
     tdpram_reset <= not AXIS_ARSTN;
     input_count_en <= or_reduce(tdpram_input_en);
@@ -64,7 +60,7 @@ begin
             CLK_A      => AXIS_ACLK,
             RST_A      => tdpram_reset,
             WRITE_EN_A => tdpram_input_en,
-            ADDRESS_A  => tdpram_input_addr,
+            ADDRESS_A  => std_logic_vector(tdpram_input_addr),
             DATA_IN_A  => S_AXIS_TDATA,
             DATA_OUT_A => open,
             RST_B      => tdpram_reset,
@@ -85,7 +81,7 @@ begin
             RST       => tdpram_reset,
             ENABLE    => input_count_en,
             ADDR_CHNG => input_flip,
-            ADDRESS   => unsigned(tdpram_input_addr)
+            ADDRESS   => tdpram_input_addr
         );
 
     OUTPUT_CTRL : entity work.output_address_counter
@@ -101,35 +97,19 @@ begin
             RST       => tdpram_reset,
             ENABLE    => tdpram_output_en,
             ADDR_CHNG => output_flip,
-            ADDRESS   => tdpram_input_addr
+            ADDRESS   => tdpram_output_addr
         );
 
-    curr_state_proc : process(AXIS_ACLK) is
-    begin
-        if (rising_edge(AXIS_ACLK)) then
-            if (AXIS_ARSTN = '0') then
-                curr_out_state <= RESET;
-                curr_in_state <= RESET;
-            else
-                curr_out_state <= next_out_state;
-                curr_in_state <= next_in_state;
-            end if;
-        end if;
-    end process curr_state_proc;
-
-    output_comb_proc : process(all) is
-    begin
-        next_out_state <= curr_out_state;
-        case curr_out_state is
-            when BUFF_ONE =>
-            when BUFF_TWO =>
-                if(curr_in_state = BUFF_ONE) then
-                    axis_tvalid <= '1';
-                end if;
-            when RESET =>
-                next_out_state <= BUFF_TWO;
-            when others =>
-        end case;
-    end process output_comb_proc;
+    LOGIC_CTRL : entity work.address_logic
+        port map (
+            CLK           => AXIS_ACLK,
+            RST           => tdpram_reset,
+            INPUT_CHANGE  => input_flip,
+            OUTPUT_CHANGE => output_flip,
+            DATA_VALID    => S_AXIS_TVALID,
+            DATA_READY    => M_AXIS_TREADY,
+            INPUT_ENABLE  => input_count_en,
+            OUTPUT_ENABLE => tdpram_output_en
+        );
 
 end architecture synthesizable;
