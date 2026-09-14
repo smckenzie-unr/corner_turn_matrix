@@ -19,7 +19,7 @@ logger.propagate = True
 
 @cocotb.test()
 async def tdpram_distributed_simulation(DUT : HierarchyObject) -> None:
-    await setup_clock(DUT.CLK_A, 200e6)
+    await setup_clock(DUT.CLK_A, 320e6)
     await Timer(1, unit = "us")
 
     check_array = np.arange(1023, -1, -1)
@@ -56,7 +56,7 @@ async def tdpram_distributed_simulation(DUT : HierarchyObject) -> None:
 
 @cocotb.test()
 async def tdpram_bram_simulation(DUT : HierarchyObject) -> None:
-    await setup_clock(DUT.CLK_A, 200e6)
+    await setup_clock(DUT.CLK_A, 320e6)
     await Timer(1, unit = "us")
 
     check_array = np.arange(1023, -1, -1)
