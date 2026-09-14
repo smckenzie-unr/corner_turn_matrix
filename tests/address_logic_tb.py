@@ -11,9 +11,10 @@ from cocotb.handle import HierarchyObject, SimHandleBase
 
 from scripts.tb_utils import setup_clock
 
-logger = logging.getLogger("output_column_counter_tb")
+logger = logging.getLogger("address_logic_tb")
 logger.setLevel(logging.INFO)
 logger.propagate = True
+
 
 @cocotb.test()
 async def logic_test(DUT : HierarchyObject) -> None:
