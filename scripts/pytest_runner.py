@@ -195,7 +195,7 @@ def test_tdpram(request : FixtureRequest) -> None:
         ],
         build_args = ["-quiet"],
         build_dir = "./build/",
-        timescale = ("1ns", "1ps"),
+        timescale = ("1ns", "1fs"),
         hdl_library = "work",
         always = True
     )
@@ -205,7 +205,7 @@ def test_tdpram(request : FixtureRequest) -> None:
             VHDL("/tools/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_VCOMP.vhd")
         ],
         build_dir = "./build/",
-        timescale = ("1ns", "1ps"),
+        timescale = ("1ns", "1fs"),
         hdl_library = "xpm",
         always = True
     )
@@ -224,7 +224,7 @@ def test_tdpram(request : FixtureRequest) -> None:
             "-quiet"
         ],
 
-        timescale = ("1ns", "1ps"),
+        timescale = ("1ns", "1fs"),
         hdl_library = "work",
         always = True
     )
@@ -238,12 +238,85 @@ def test_tdpram(request : FixtureRequest) -> None:
             "-L", 
             "xpm",
             "-t",
-            "ps",
+            "fs",
             "-quiet"
         ],
         testcase = testcase,
         parameters = parameters,
-        timescale = ("1ns", "1ps"),
+        timescale = ("1ns", "1fs"),
+        verbose = False,
+        waves = True
+    )
+
+@pytest.mark.axis_corner_turn_matrix
+def test_axis_corner_turn_matrix() -> None:
+    toplevel_entity = "axis_corner_turn_matrix"
+    testbench = "axis_corner_turn_matrix_tb"
+
+    runner = get_runner("questa")
+
+    runner.build(
+        sources = [
+            Verilog("/tools/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv")
+        ],
+        build_args = ["-quiet"],
+        build_dir = "./build/",
+        timescale = ("1ns", "1fs"),
+        hdl_library = "work",
+        always = True
+    )
+
+    runner.build(
+        sources = [
+            VHDL("/tools/Xilinx/Vivado/2024.1/data/ip/xpm/xpm_VCOMP.vhd")
+        ],
+        build_dir = "./build/",
+        timescale = ("1ns", "1fs"),
+        hdl_library = "xpm",
+        always = True
+    )
+
+    runner.build(
+        sources = [
+            VHDL("./includes/ctm_package.vhd"),
+            VHDL("./sources/address_logic.vhd"),
+            VHDL("./sources/input_address_counter.vhd"),
+            VHDL("./sources/output_address_counter.vhd"),
+            VHDL("./sources/xilinx_tdpram_wrapper.vhd"),
+            VHDL(f"./sources/{toplevel_entity}.vhd")
+        ],
+        build_dir = "./build/",
+        hdl_toplevel = toplevel_entity,
+        build_args = [
+            VHDL("-2008"),
+            Verilog("-L"),
+            Verilog("xpm"),
+            "-quiet"
+        ],
+
+        timescale = ("1ns", "1fs"),
+        hdl_library = "work",
+        always = True
+    )
+
+    runner.test(
+        hdl_toplevel = toplevel_entity,
+        test_module = testbench,
+        hdl_toplevel_library = "work",
+        hdl_toplevel_lang = "vhdl",
+        plusargs = [
+            "-L", 
+            "xpm",
+            "-t",
+            "fs",
+            "-quiet"
+        ],
+        parameters = {
+            "C_NUMBER_ROWS" : 32,
+            "C_NUMBER_COLS" : 128,
+            "C_DATA_WIDTH" : 16
+        },
+        timescale = ("1ns", "1fs"),
         verbose = False,
         waves = True
     )

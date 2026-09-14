@@ -21,5 +21,7 @@ python_files = [
 markers = [
     "input_column_counter: Counts the input address counter",
     "output_column_counter: Counts the output address counter",
-    "xilinx_tdpram_wrapper: Simulated the xpm wrapper"
+    "address_logic: Checks the address flip floping logic",
+    "xilinx_tdpram_wrapper: Simulated the xpm wrapper",
+    "axis_corner_turn_matrix: Simulation of the finaly project"
 ]
