@@ -41,15 +41,32 @@ architecture synthesizable of axis_corner_turn_matrix is
     signal input_flip         : std_logic;
     signal output_flip        : std_logic;
 
-    signal axis_tready        : std_logic := '0';
-    signal axis_tvalid        : std_logic := '0';
+    signal axis_tready        : std_logic;
+    signal axis_tvalid        : std_logic;
+
+    signal data_ready         : std_logic;
 begin
 
     S_AXIS_TREADY <= axis_tready;
     M_AXIS_TVALID <= axis_tvalid;
 
     tdpram_reset <= not AXIS_ARSTN;
-    input_count_en <= or_reduce(tdpram_input_en);
+    tdpram_input_en <= (others => input_count_en);
+
+    combination_proc : process(all) is
+    begin
+        if (S_AXIS_TVALID = '1' and axis_tready = '1') then
+            input_count_en <= '1';
+        else 
+            input_count_en <= '0';
+        end if;
+
+        if(axis_tvalid = '1' and M_AXIS_TREADY = '1' and data_ready = '1') then
+            tdpram_output_en <= '1';
+        else
+            tdpram_output_en <= '0';
+        end if;
+    end process combination_proc;
 
     MEM : entity work.xilinx_tdpram_wrapper
         generic map (
@@ -106,10 +123,9 @@ begin
             RST           => tdpram_reset,
             INPUT_CHANGE  => input_flip,
             OUTPUT_CHANGE => output_flip,
-            DATA_VALID    => S_AXIS_TVALID,
-            DATA_READY    => M_AXIS_TREADY,
-            INPUT_ENABLE  => input_count_en,
-            OUTPUT_ENABLE => tdpram_output_en
+            INPUT_ENABLE  => axis_tready,
+            OUTPUT_ENABLE => axis_tvalid,
+            FIRST_PASS_EN => data_ready
         );
 
 end architecture synthesizable;

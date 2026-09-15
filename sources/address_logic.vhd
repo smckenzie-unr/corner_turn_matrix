@@ -8,10 +8,9 @@ entity address_logic is
         RST           : in  std_logic;
         INPUT_CHANGE  : in  std_logic;
         OUTPUT_CHANGE : in  std_logic;
-        DATA_VALID    : in  std_logic;
-        DATA_READY    : in  std_logic;
         INPUT_ENABLE  : out std_logic;
-        OUTPUT_ENABLE : out std_logic
+        OUTPUT_ENABLE : out std_logic;
+        FIRST_PASS_EN : out std_logic
     );
 end entity address_logic;
 
@@ -20,10 +19,24 @@ architecture synthesizable of address_logic is
     signal output_chng_detect : std_logic;
 
     signal state_change : std_logic;
+
+    signal first_pass_detect : std_logic;
 begin
 
-    OUTPUT_ENABLE <= DATA_READY and not output_chng_detect;
-    INPUT_ENABLE <= DATA_VALID and not input_chng_detect;
+    OUTPUT_ENABLE <= not output_chng_detect;
+    INPUT_ENABLE <= not input_chng_detect;
+    FIRST_PASS_EN <= first_pass_detect;
+
+    first_write_proc : process(CLK) is 
+    begin
+        if (rising_edge(CLK)) then
+            if (RST = '1') then
+                first_pass_detect <= '0';
+            elsif (input_chng_detect = '1') then
+                first_pass_detect <= '1';
+            end if;
+        end if;
+    end process first_write_proc;
 
     in_flip_latch : process(CLK) is
     begin
