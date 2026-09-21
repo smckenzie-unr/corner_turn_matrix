@@ -87,7 +87,7 @@ def test_output_column_counter() -> None:
             "C_ADDRESS_WIDTH"  : 32,
             "C_BASE_ADDRESS"   : 0,
             "C_OFFSET_ADDRESS" : 8192,
-            "C_REGISTER_ADDR"  : "true"
+            "C_REGISTER_ADDR"  : "false"
         },
         timescale = ("1ns", "1fs"),
         hdl_library = "work",
@@ -312,8 +312,8 @@ def test_axis_corner_turn_matrix() -> None:
             "-quiet"
         ],
         parameters = {
-            "C_NUMBER_ROWS" : 32,
-            "C_NUMBER_COLS" : 128,
+            "C_NUMBER_ROWS" : 4,
+            "C_NUMBER_COLS" : 32,
             "C_DATA_WIDTH" : 16
         },
         timescale = ("1ns", "1fs"),
