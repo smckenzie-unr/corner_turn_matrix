@@ -27,6 +27,7 @@ architecture synthesizable of axis_corner_turn_matrix is
     constant C_BUFFER_SIZE    : integer := 256;
     constant C_TOTAL_MEM_SIZE : integer := C_BUFFER_SIZE + 2 * C_NUMBER_COLS * C_NUMBER_ROWS;
     constant C_ADDRESS_SIZE   : integer := clog2(C_TOTAL_MEM_SIZE);
+    constant C_COUNTER_SIZE   : integer := 2;
 
     type state_machine_t is (BUFF_ONE, BUFF_TWO, RESET);
 
@@ -43,8 +44,9 @@ architecture synthesizable of axis_corner_turn_matrix is
 
     signal axis_tready        : std_logic;
     signal axis_tvalid        : std_logic;
+    signal tvalid_notify      : std_logic;
 
-    signal data_ready         : std_logic;
+    signal beat_counter       : unsigned(C_COUNTER_SIZE - 1 downto 0);
 begin
 
     S_AXIS_TREADY <= axis_tready;
@@ -52,6 +54,22 @@ begin
 
     tdpram_reset <= not AXIS_ARSTN;
     tdpram_input_en <= (others => input_count_en);
+
+    tvalid_notify <= '1' when (beat_counter > 0) else '0';
+    axis_tready <= '1' when (beat_counter < 2) else '0';
+
+    tvalid_proc : process(AXIS_ACLK) is
+    begin
+        if (rising_edge(AXIS_ACLK)) then
+            if (AXIS_ARSTN = '0') then
+                axis_tvalid <= '0';
+            elsif (tvalid_notify = '1') then
+                axis_tvalid <= '1';
+            else
+                axis_tvalid <= '0';
+            end if;
+        end if;
+    end process tvalid_proc;
 
     combination_proc : process(all) is
     begin
@@ -61,12 +79,25 @@ begin
             input_count_en <= '0';
         end if;
 
-        if(axis_tvalid = '1' and M_AXIS_TREADY = '1' and data_ready = '1') then
+        if(tvalid_notify = '1' and M_AXIS_TREADY = '1') then
             tdpram_output_en <= '1';
         else
             tdpram_output_en <= '0';
         end if;
     end process combination_proc;
+
+    counter_proc : process(AXIS_ACLK) is
+    begin
+        if (rising_edge(AXIS_ACLK)) then
+            if (AXIS_ARSTN = '0') then
+                beat_counter <= (others => '0');
+            elsif (input_flip = '1') then
+                beat_counter <= beat_counter + 1;
+            elsif (output_flip = '1') then
+                beat_counter <= beat_counter - 1;
+            end if;
+        end if;
+    end process counter_proc;
 
     MEM : entity work.xilinx_tdpram_wrapper
         generic map (
@@ -107,7 +138,8 @@ begin
             C_NUM_COLS       => C_NUMBER_COLS,
             C_ADDRESS_WIDTH  => C_ADDRESS_SIZE,
             C_BASE_ADDRESS   => 0,
-            C_OFFSET_ADDRESS => C_TOTAL_MEM_SIZE / 2
+            C_OFFSET_ADDRESS => C_TOTAL_MEM_SIZE / 2,
+            C_REGISTER_ADDR  => false
         )
         port map (
             CLK       => AXIS_ACLK,
@@ -115,17 +147,6 @@ begin
             ENABLE    => tdpram_output_en,
             ADDR_CHNG => output_flip,
             ADDRESS   => tdpram_output_addr
-        );
-
-    LOGIC_CTRL : entity work.address_logic
-        port map (
-            CLK           => AXIS_ACLK,
-            RST           => tdpram_reset,
-            INPUT_CHANGE  => input_flip,
-            OUTPUT_CHANGE => output_flip,
-            INPUT_ENABLE  => axis_tready,
-            OUTPUT_ENABLE => axis_tvalid,
-            FIRST_PASS_EN => data_ready
         );
 
 end architecture synthesizable;
